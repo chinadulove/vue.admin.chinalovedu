@@ -1,149 +1,160 @@
 <template>
-<!-- 员工管理 -->
     <div>
-        <!--按钮-->
-        <el-button type="success" size="small" @click="toAddHandler">添加</el-button>
+        <h2>产品管理</h2>
+        <!-- 按钮 -->
+        <el-button type="primary" size="small" @click="toAddHandler">添加</el-button>
         <el-button type="danger" size="small">批量删除</el-button>
-        <!--/按钮-->
-
-        <!--表格-->
-        <el-table :data="product">
-            <el-table-column  label="编号" prop="id"></el-table-column>
-            <el-table-column  label="产品名称" prop="name"></el-table-column>
-            <el-table-column  label="价格" prop="price"></el-table-column>
-            <el-table-column  label="描述" prop="description"></el-table-column>
-            <el-table-column  label="所属产品" prop="status"></el-table-column>
-            <el-table-column  label="操作">
-                  <template v-slot="slot">
-                      <a href="" @click.prevent="toDeleteHandler(slot.row.id)">删除</a>
-                      <a href="" @click.prevent="toUpdateHandler">修改</a>
-                      <a href="" @click.prevent="toDetailHandler">详情</a>
-
-                  </template>
-                  </el-table-column>           
+        <!-- /按钮 -->
+        <!-- 表格 -->
+        <el-table :data="products">
+            <el-table-column type="selection" width="55"></el-table-column>
+            <el-table-column prop="id" label="编号"></el-table-column>
+            <el-table-column prop="name" label="产品名称"></el-table-column>
+            <el-table-column prop="price" label="价格"></el-table-column>
+            <el-table-column prop="description" label="描述"></el-table-column>
+            <el-table-column prop="categoryId" label="所属栏目"></el-table-column>
+            <el-table-column label="操作">
+                <template v-slot="slot">
+                    <a href="" @click.prevent="toDeleteHandler">删除</a>
+                    <a href="" @click.prevent="toUpdataHandler">修改</a>
+                </template>
+            </el-table-column>
         </el-table>
-        <!--/表格结束-->
-
-        <!--分页开始-->
-        <el-pagination layout="prev,pager,next" :total="50"></el-pagination>
-        <!--/分页结束-->
-        <!--模态框-->
-        <el-dialog :title.sync="title"  :visible.sync="visible" width="60%">
-            
+        <!-- /表格 -->
+        <!-- 分页 -->
+        <el-pagination layout="prev, pager, next" :total="50"></el-pagination>
+        <!-- /分页结束 -->
+        <!-- 模态框 -->
+        <el-dialog :title="title" :visible.sync="visible" width="50%">
+            {{form}}
             <el-form :model="form" label-width="80px">
-
-             <el-form-item label="编号">
-                 <el-input v-model="form.id"/>                
-             </el-form-item>
-
-             <el-form-item label="产品名称">               
-                 <el-input v-model="form.name"/>
-             </el-form-item>
-             
-             <el-form-item label="价格" >
-                 <el-input v-model="form.price"/>                
-             </el-form-item>            
-
-             <el-form-item label="描述">
-                 <el-input v-model="form.decription"/>                
-             </el-form-item>
-
-            <el-form-item label="所属产品">
-                 <el-input v-model="form.status"/>                
-             </el-form-item>
-           
-         </el-form>
-
+                <el-form-item label="产品名称">
+                    <el-input v-model="form.name"></el-input>
+                </el-form-item>
+                <el-form-item label="价格">
+                    <el-input v-model="form.price"></el-input>
+                </el-form-item>
+                <el-form-item label="所属栏目">
+                    <el-select v-model="form.categoryId" placeholder="请选择">
+                        <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.label">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="介绍">
+                    <el-input type="textarea" :rows="2" v-model="form.description"></el-input>
+                </el-form-item>
+                <el-form-item label="产品主图">
+                   <el-upload v-model="form.photo"
+                        class="upload-demo"
+                        action="https://jsonplaceholder.typicode.com/posts/"
+                        :on-preview="handlePreview"
+                        :on-remove="handleRemove"
+                        :file-list="fileList"
+                        list-type="picture">
+                        <el-button size="small" type="primary">点击上传</el-button>
+                        <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
             <span slot="footer" class="dialog-footer">
-            <el-button size="small" @click="closeModalHandler">取 消</el-button>
-            <el-button size="small" type="primary" @click="submitHandler">确 定</el-button>
-             </span>
+                <el-button size="small" @click="closeModelHandler">取 消</el-button>
+                <el-button size="small" type="primary" @click="submitHandler">确 定</el-button>
+            </span>
         </el-dialog>
-        <!--/模态框-->
-
+        <!-- /模态框 -->
     </div>
 </template>
-
 <script>
 import request from '@/utils/request'
 import querystring from 'querystring'
 export default {
+    methods:{
+        //上传图片
+        handleRemove(file, fileList) {
+            console.log(file, fileList);
+        },
+        handlePreview(file) {
+            console.log(file);
+        },
+        //加载页面
+        loadData(){
+            let url ="http://localhost:6677/product/findAll";
+            request.get(url).then((response)=>{
+                this.products = response.data;
+            })
+        },
+        submitHandler(){
+            let url = "http://localhost:6677/product/saveOrUpdate";
+            request({
+                url,
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/x-www-form-urlencoded"
+                },
+                data:querystring.stringify(this.form)
+            }).then((response)=>{
+                this.closeModelHandler();
+                this.loadData();
+                this.$message({
+                    type:"success",
+                    message:response.message
+                })
+            })
+            
+        },
+        toAddHandler(){
+            this.visible=true;
+        },
+        closeModelHandler(){
+            this.visible=false;
+        },
+        toUpdataHandler(){
+            this.title="修改栏目信息"
+            this.visible=true;
+        },
+        toDeleteHandler(){
+            this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.$message({
+                    type: 'success',
+                    message: '删除成功!'
+                })
+            })
+        }
+    },
     data(){
         return{
-            visible:false,
-            product:[],
-            form:{
-                type:"product"
-            }
+            fileList: [],
+            title:"录入栏目信息",
+            visible:true,
+            products:[],
+            form:{},
+            options: [{ value: '123', label: '9139'}, 
+            { value: '家具养护', label: '9202' }, 
+            { value: '洗护服务', label: '9358' }, 
+            { value: '生活急救箱', label: '9392' }, 
+            { value: 'yyy', label: '9411'},
+            { value: '水果慢羊羊', label: '9451' }, 
+            { value: 'wxj', label: '9476' }, 
+            { value: 'www', label: '9477' }, 
+            { value: '澳大利亚袋鼠', label: '9481' }, 
+            ],
+            value: ''
         }
     },
-
     created(){
-        //在页面加载出来的时候加载数据
         this.loadData();
-    },
-    methods:{
-        submitHandler(){
-          let url = "http://localhost:6677/product/saveOrUpdate";
-          //前端向后台发送请求，完成数据保存操作
-      request({
-        url,
-        method:"POST",
-        //告诉给后台我的请求体中放的是查询字符串
-        headers:{
-          "Content-Type":"application/x-www-form-urlencoded"
-        },
-        //请求体中的数据，将this.form转换为查询字符串发送给后台
-          data:querystring.stringify(this.form)
-      }).then((response)=>{
-          this.closeModalHandler();
-          this.loadData();
-          this.$message({type:"success",message:response.message});
-          
-      })
-      
-        },
-        //重载员工数据
-        loadData(){
-          //this->vue实例,通过vue实例访问该实例中的数据
-          //this.title/this.toAddHandler
-                let url="http://localhost:6677/product/findAll"
-                request.get(url).then((response)=>{
-                    this.product=response.data;
-                })           
-        },
-
-        toAddHandler(){
-            this.title="添加产品信息";
-            this.visible=true;
-        },
-
-        toDeleteHandler(id){
-             this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.$message({
-            type: 'success',
-            message: '删除成功!'
-          });
-        })
-
-        },
-
-        toUpdateHandler(row){
-            this.title="修改产品信息";
-            this.visible=true;
-
-        },
-
-        closeModalHandler(){
-            this.visible=false;
-        }
     }
 }
 </script>
+
 <style scoped>
 
 </style>

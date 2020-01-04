@@ -78,27 +78,28 @@ export const constantRoutes = [
       }
     ]
   },
+
   {
-    path: '/Sectionmanagement',
+    path:'/product',
     component: Layout,
     children: [
       {
         path: 'list',
-        name: 'sectionmanagementList',
-        component: () => import('@/pages/Sectionmanagement/List'),
-        meta: { title: '栏目管理', icon: 'setting' }
+        name: 'productList',
+        component: () => import('@/pages/product/List'),
+        meta: { title: '产品管理', icon: 'tree' }
       }
     ]
   },
   {
-    path:'/Product',
+    path:'/category',
     component: Layout,
     children: [
       {
         path: 'list',
-        name: 'product',
-        component: () => import('@/pages/Product/List'),
-        meta: { title: '产品管理', icon: 'setting' }
+        name: 'categoryList',
+        component: () => import('@/pages/category/List'),
+        meta: { title: '栏目管理', icon: 'tree' }
       }
     ]
   },
